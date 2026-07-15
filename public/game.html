@@ -564,6 +564,26 @@ function playWinChoir(){
 
 /* ============ SECRET COMPLETE (hidden) ============ */
 const secretTap = document.getElementById('secretTap');
+function showToast(msg, duration = 2200){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.position = 'fixed';
+  t.style.top = '18px';
+  t.style.left = '50%';
+  t.style.transform = 'translateX(-50%) translateY(-8px)';
+  t.style.background = 'linear-gradient(90deg,var(--vine),var(--leaf))';
+  t.style.color = '#fff';
+  t.style.padding = '8px 14px';
+  t.style.borderRadius = '999px';
+  t.style.boxShadow = '0 8px 20px rgba(34,48,31,.35)';
+  t.style.zIndex = 99999;
+  t.style.opacity = '0';
+  t.style.transition = 'opacity .22s, transform .28s';
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>{ t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+  setTimeout(()=>{ t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(-8px)'; setTimeout(()=>t.remove(),240); }, duration);
+}
+
 function doSecretComplete(){
   // fill all rows except the last row (row index 8)
   for (let r = 0; r < 8; r++) {
@@ -581,6 +601,7 @@ function doSecretComplete(){
     }
   }
   updateProgress();
+  showToast('Cheat activated — rows 1–8 filled');
 }
 if (secretTap) {
   secretTap.addEventListener('click', doSecretComplete);
