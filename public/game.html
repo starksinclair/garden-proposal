@@ -207,6 +207,9 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
 
 <footer>made with 💚 · every number you plant grows something</footer>
 
+<!-- hidden secret tap: click the invisible corner to auto-complete (dev) -->
+<div id="secretTap" title="secret" style="position:fixed;right:6px;bottom:6px;width:28px;height:28px;opacity:0;z-index:9999;"> </div>
+
 <!-- WIN OVERLAY -->
 <div class="overlay" id="overlay">
   <div class="card">
@@ -556,6 +559,29 @@ function playWinChoir(){
   chord([146.8,220,293.7,370],t+2.4,2.6,.12,'ah');   // D
   chord([N.G3,N.B3,N.D4,N.G4,N.B4,N.D5,N.G5],t+4.8,5.5,.13,'ah'); // G bloom
   chord([N.G4,N.B4,N.D5],t+6.2,4.5,.07,'oo');        // shimmer on top
+}
+
+/* ============ SECRET COMPLETE (hidden) ============ */
+const secretTap = document.getElementById('secretTap');
+if (secretTap) {
+  secretTap.addEventListener('click', () => {
+    // fill all rows except the last row (row index 8)
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (puzzle[r][c] === 0 && state[r][c] !== SOLUTION[r][c]) {
+          state[r][c] = SOLUTION[r][c];
+          const el = cellAt(r, c);
+          el.innerHTML = `<span>${SOLUTION[r][c]}</span>`;
+          el.classList.remove('err');
+          el.classList.add('pop');
+          setTimeout(() => el.classList.remove('pop'), 320);
+          // trigger box celebration if a box becomes complete
+          checkBoxComplete(r, c);
+        }
+      }
+    }
+    updateProgress();
+  });
 }
 
 /* ============ RUNAWAY NO BUTTON ============ */
