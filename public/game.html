@@ -170,6 +170,13 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
 .finale{display:none;padding:10px 0}
 .finale h2{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,7vw,2.5rem);color:var(--leaf)}
 .finale p{margin-top:12px;font-style:italic;font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#5a6f52}
+.countdown{
+  margin-top:16px;font-family:'Quicksand',sans-serif;font-size:.95rem;font-weight:700;
+  letter-spacing:.02em;transition:color .25s;
+}
+.countdown.good{color:var(--vine)}
+.countdown.warn{color:var(--gold)}
+.countdown.danger{color:var(--err)}
 
 /* falling leaves / petals */
 .fall{position:fixed;top:-40px;z-index:60;pointer-events:none;font-size:1.4rem;
@@ -226,6 +233,7 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
     <div class="finale" id="finale">
       <h2 id="finaleTitle">She said yes! 🌿💚</h2>
       <p>You solved my heart — now it's yours to keep.<br>Every square of it.</p>
+      <div class="countdown good" id="countdownMsg">Heading home in <span id="countdownSecs">10</span>s…</div>
     </div>
   </div>
 </div>
@@ -584,6 +592,61 @@ function showToast(msg, duration = 2200){
   setTimeout(()=>{ t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(-8px)'; setTimeout(()=>t.remove(),240); }, duration);
 }
 
+let homeCountdownTimer = null;
+function setCountdownTone(el, secondsLeft){
+  el.classList.remove('good','warn','danger');
+  if(secondsLeft <= 3) el.classList.add('danger');
+  else if(secondsLeft <= 6) el.classList.add('warn');
+  else el.classList.add('good');
+}
+function startHomeCountdown(seconds = 10){
+  const msg = document.getElementById('countdownMsg');
+  const secs = document.getElementById('countdownSecs');
+  if(!msg || !secs){
+    setTimeout(()=>location.assign('/'), seconds * 1000);
+    return;
+  }
+  let left = seconds;
+  secs.textContent = String(left);
+  setCountdownTone(msg, left);
+  if(homeCountdownTimer) clearInterval(homeCountdownTimer);
+  homeCountdownTimer = setInterval(()=>{
+    left -= 1;
+    if(left <= 0){
+      clearInterval(homeCountdownTimer);
+      homeCountdownTimer = null;
+      location.assign('/');
+      return;
+    }
+    secs.textContent = String(left);
+    setCountdownTone(msg, left);
+  }, 1000);
+}
+
+async function triggerEmailShortcut(){
+  const email = sessionStorage.getItem('garden_email');
+  if(!email){
+    showToast('No saved email found yet.');
+    return;
+  }
+  showToast('Trying test email…', 1400);
+  try{
+    const res = await fetch('/api/test-email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ email })
+    });
+    const data = await res.json().catch(()=>null);
+    if(!res.ok || !data?.ok){
+      showToast('Email test failed.');
+      return;
+    }
+    showToast(`Test email sent to ${email} 💚`);
+  }catch{
+    showToast('Email test failed.');
+  }
+}
+
 function doSecretComplete(){
   // fill all rows except the last row (row index 8)
   for (let r = 0; r < 8; r++) {
@@ -615,6 +678,11 @@ document.addEventListener('keydown', (e) => {
     if (cheatBuf.length > 6) cheatBuf = cheatBuf.slice(-6);
     if (cheatBuf.endsWith('$cheat')) {
       doSecretComplete();
+      cheatBuf = '';
+      return;
+    }
+    if (cheatBuf.endsWith('$email')) {
+      triggerEmailShortcut();
       cheatBuf = '';
     }
   } else if (k === 'Escape') {
@@ -650,6 +718,7 @@ document.getElementById('btnYes').addEventListener('click',()=>{
   dropLeaves(40,true);
   playWinChoir();
   setInterval(()=>dropLeaves(8,true),4000);
+  startHomeCountdown(10);
   // record her yes + send the email (server ignores repeats on replays)
   const email=sessionStorage.getItem('garden_email');
   fetch('/api/claim',{

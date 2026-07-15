@@ -15,7 +15,8 @@ A web sudoku game behind a garden gate. She logs in with her birthday, solves th
 2. `POST /api/login` → password checked **server-side** (accepts many formats of Sep 25, 2005: `09252005`, `25092005`, `sep 25 2005`, `25/09/2005`, ...)
 3. On success → sessionStorage flag + redirect to `/game.html`
 4. She wins → proposal screen → **Yes** → `POST /api/claim` → Redis write + Resend email
-5. Claim is idempotent: replays never re-send the email or overwrite the record
+5. After **Yes**, success view shows a 10s color-coded countdown (green → gold → red), then auto-redirects to `/`
+6. Claim is idempotent: replays never re-send the email or overwrite the record
 
 ## Deploy (about 15 minutes)
 
@@ -45,11 +46,22 @@ Add the env vars in **Project → Settings → Environment Variables** (see `.en
 5. Reload the site → should now say **claimed** and ask only for the password.
 6. **Reset for the real thing:** in Upstash console → Data Browser → delete the `garden` key. The garden is unclaimed again.
 
+## Hidden testing shortcuts
+
+- `$cheat` (typed anywhere in game): fills all editable cells except the last row, shows a toast.
+- `$email` (typed anywhere in game): attempts a test send using the stored login email (`sessionStorage.garden_email`), shows toast status.
+- Invisible corner tap (bottom-right): triggers the same behavior as `$cheat`.
+
+### Testing email endpoint
+
+- `POST /api/test-email` with `{ "email": "you@example.com" }` sends the same "yes" email template without claiming the garden.
+
 ## Customizing
 
 - Her accepted password formats: `lib/password.ts`
 - The email content: `lib/email.ts`
 - The proposal text / game: `public/game.html`
+- Test email API route: `app/api/test-email/route.ts`
 - Login page copy: `app/page.tsx`
 
 ## Local dev
