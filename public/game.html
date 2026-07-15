@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>A Puzzle for You 🌿</title>
-  <link rel="shortcut icon" href="tulip.png" type="image/x-icon">
+  <link rel="shortcut icon" href="/leaf.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -54,7 +54,15 @@ h1 em{font-style:italic;color:var(--vine)}
 .chip:active{transform:translateY(0)}
 .chip.on{background:var(--vine);color:#fff}
 
-.stage{position:relative;margin:14px 0 8px}
+.playArea{
+  width:min(96vw,760px);
+  margin:14px 0 8px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  gap:14px;
+}
+.stage{position:relative}
 .board{
   display:grid;grid-template-columns:repeat(9,1fr);
   width:min(88vw,430px);aspect-ratio:1;
@@ -101,6 +109,44 @@ svg.vines{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100%
   transition:width .6s cubic-bezier(.34,1.4,.5,1);position:relative}
 .progressFill::after{content:"🌿";position:absolute;right:-4px;top:50%;transform:translateY(-52%);font-size:.85rem}
 
+.scoreCard{
+  width:min(92vw,220px);
+  background:var(--cell);
+  border:1.5px solid rgba(76,140,74,.35);
+  border-radius:14px;
+  box-shadow:0 10px 24px rgba(47,107,60,.15);
+  padding:12px;
+}
+.scoreCard h3{
+  font-family:'Cormorant Garamond',serif;
+  color:var(--leaf);
+  font-size:1.22rem;
+  margin-bottom:8px;
+}
+.scoreMain{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  margin-bottom:8px;
+}
+.scoreMain .num{
+  font-size:2rem;
+  line-height:1;
+  font-weight:700;
+  color:var(--leaf);
+}
+.scoreMain .max{
+  font-size:.9rem;
+  color:#5a6f52;
+}
+.scoreMeta{
+  display:grid;
+  gap:6px;
+  font-size:.84rem;
+  color:#42533f;
+}
+.scoreMeta b{color:var(--ink)}
+
 .pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0 8px;width:min(88vw,430px)}
 .pad button{
   font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;
@@ -111,6 +157,64 @@ svg.vines{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100%
 .pad button:active{transform:translateY(0)}
 .pad .erase{font-family:'Quicksand',sans-serif;font-size:.85rem;font-weight:600}
 footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
+
+.leaderboard{
+  width:min(96vw,760px);
+  margin:12px 0 8px;
+  background:rgba(247,251,242,.88);
+  border:1.5px solid rgba(76,140,74,.3);
+  border-radius:14px;
+  padding:12px;
+}
+.leaderboard h3{
+  font-family:'Cormorant Garamond',serif;
+  color:var(--leaf);
+  font-size:1.35rem;
+}
+.leaderboardSub{
+  margin-top:4px;
+  font-size:.78rem;
+  color:#5a6f52;
+}
+.leaderboardHead,.leaderboardRow{
+  display:grid;
+  grid-template-columns:48px 1.35fr .7fr .7fr .8fr;
+  gap:8px;
+  align-items:center;
+  font-size:.8rem;
+}
+.leaderboardHead{
+  margin-top:10px;
+  padding:0 6px 6px;
+  color:#5a6f52;
+  border-bottom:1px solid rgba(76,140,74,.2);
+}
+.leaderboardRows{
+  margin-top:4px;
+  display:grid;
+  gap:4px;
+}
+.leaderboardRow{
+  padding:7px 6px;
+  border-radius:8px;
+  background:rgba(223,234,212,.35);
+  color:#2d3d2c;
+}
+.leaderboardRow.top{background:rgba(201,169,78,.18)}
+.leaderboardEmpty{
+  margin-top:8px;
+  font-size:.8rem;
+  color:#6b7f63;
+}
+
+@media (max-width: 740px){
+  .playArea{flex-direction:column;align-items:center}
+  .scoreCard{width:min(88vw,430px)}
+  .leaderboardHead,.leaderboardRow{
+    grid-template-columns:42px 1.15fr .8fr .8fr .8fr;
+    font-size:.76rem;
+  }
+}
 
 /* ============ WIN OVERLAY ============ */
 .overlay{
@@ -201,9 +305,21 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
   <button class="chip" id="hintBtn">🌱 grow a hint</button>
 </div>
 
-<div class="stage">
-  <svg class="vines" id="vineSvg" xmlns="http://www.w3.org/2000/svg"></svg>
-  <div class="board" id="board"></div>
+<div class="playArea">
+  <div class="stage">
+    <svg class="vines" id="vineSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="board" id="board"></div>
+  </div>
+  <aside class="scoreCard">
+    <h3>Live score</h3>
+    <div class="scoreMain"><span class="num" id="liveScore">100</span><span class="max">/ 100</span></div>
+    <div class="scoreMeta">
+      <div><b>Time</b>: <span id="timeElapsed">0:00</span></div>
+      <div><b>Wrong answers</b>: <span id="wrongCount">0</span></div>
+      <div><b>Current streak</b>: <span id="streakCount">0</span></div>
+      <div><b>Best streak</b>: <span id="bestStreakCount">0</span></div>
+    </div>
+  </aside>
 </div>
 
 <div class="progressWrap">
@@ -212,6 +328,16 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
 </div>
 
 <div class="pad" id="pad"></div>
+
+<section class="leaderboard" id="leaderboard">
+  <h3>Garden leaderboard</h3>
+  <div class="leaderboardSub">Top scores (max 100), ranked by fastest + cleanest solves.</div>
+  <div class="leaderboardHead">
+    <div>Rank</div><div>Player</div><div>Score</div><div>Time</div><div>Wrongs</div>
+  </div>
+  <div class="leaderboardRows" id="leaderboardRows"></div>
+  <div class="leaderboardEmpty" id="leaderboardEmpty">No runs yet — solve the puzzle to plant the first score 🌱</div>
+</section>
 
 <footer>made with 💚 · every number you plant grows something</footer>
 
@@ -277,6 +403,20 @@ const BLANKS = [
 const puzzle = SOLUTION.map(r=>r.slice());
 BLANKS.forEach(([r,c])=>puzzle[r][c]=0);
 const state = puzzle.map(r=>r.slice());
+const gameStartedAt = Date.now();
+let wrongAnswers = 0;
+let currentStreak = 0;
+let bestStreak = 0;
+let liveScoreTicker = null;
+let leaderboardSubmitted = false;
+
+const liveScoreEl = document.getElementById('liveScore');
+const timeElapsedEl = document.getElementById('timeElapsed');
+const wrongCountEl = document.getElementById('wrongCount');
+const streakCountEl = document.getElementById('streakCount');
+const bestStreakEl = document.getElementById('bestStreakCount');
+const leaderboardRowsEl = document.getElementById('leaderboardRows');
+const leaderboardEmptyEl = document.getElementById('leaderboardEmpty');
 
 const boardEl = document.getElementById('board');
 let selected = null;
@@ -299,18 +439,71 @@ function select(r,c){
   });
   cellAt(r,c).classList.add('sel');
 }
-function place(n){
+function elapsedSeconds(){
+  return Math.floor((Date.now() - gameStartedAt) / 1000);
+}
+function formatSeconds(sec){
+  const s = Math.max(0, Math.floor(sec));
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}:${String(rem).padStart(2,'0')}`;
+}
+function clamp(v,min,max){ return Math.min(max, Math.max(min, v)); }
+function computeScore(seconds, wrongs, streakForBonus){
+  const timePenalty = Math.min(60, Math.floor(seconds / 6));
+  const wrongPenalty = wrongs * 3;
+  const streakBonus = Math.min(24, streakForBonus * 2);
+  return clamp(100 - timePenalty - wrongPenalty + streakBonus, 0, 100);
+}
+function updateLiveScore(){
+  const score = computeScore(elapsedSeconds(), wrongAnswers, currentStreak);
+  if(liveScoreEl) liveScoreEl.textContent = String(score);
+  if(timeElapsedEl) timeElapsedEl.textContent = formatSeconds(elapsedSeconds());
+  if(wrongCountEl) wrongCountEl.textContent = String(wrongAnswers);
+  if(streakCountEl) streakCountEl.textContent = String(currentStreak);
+  if(bestStreakEl) bestStreakEl.textContent = String(bestStreak);
+}
+function scorePayload(){
+  return {
+    elapsedSeconds: elapsedSeconds(),
+    wrongAnswers,
+    bestStreak
+  };
+}
+function place(n, source='player'){
   if(!selected) return;
   const {r,c}=selected; if(puzzle[r][c]!==0) return;
   const el=cellAt(r,c);
+  const prevValue = state[r][c];
+  const wasCorrect = prevValue===SOLUTION[r][c];
   el.classList.remove('err');
-  if(n===0){ state[r][c]=0; el.innerHTML=''; updateProgress(); return; }
+  if(n===0){
+    state[r][c]=0;
+    el.innerHTML='';
+    if(source==='player' && wasCorrect) currentStreak = 0;
+    updateProgress();
+    updateLiveScore();
+    return;
+  }
   state[r][c]=n;
   el.innerHTML=`<span>${n}</span>`;
   el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),320);
-  if(n!==SOLUTION[r][c]){ el.classList.add('err'); playWrong(); }
-  else { checkBoxComplete(r,c); }
+  if(n!==SOLUTION[r][c]){
+    el.classList.add('err');
+    playWrong();
+    if(source==='player'){
+      wrongAnswers++;
+      currentStreak=0;
+    }
+  } else {
+    if(source==='player' && !wasCorrect){
+      currentStreak++;
+      if(currentStreak>bestStreak) bestStreak=currentStreak;
+    }
+    checkBoxComplete(r,c);
+  }
   updateProgress();
+  updateLiveScore();
   checkWin();
 }
 document.addEventListener('keydown',e=>{
@@ -350,7 +543,7 @@ document.getElementById('hintBtn').addEventListener('click',()=>{
   }
   if(!target) return;
   select(target.r,target.c);
-  place(SOLUTION[target.r][target.c]);
+  place(SOLUTION[target.r][target.c], 'hint');
 });
 
 /* progress */
@@ -399,6 +592,8 @@ function checkWin(){
   for(let r=0;r<9;r++)for(let c=0;c<9;c++)
     if(state[r][c]!==SOLUTION[r][c])return;
   won=true;
+  if(liveScoreTicker){ clearInterval(liveScoreTicker); liveScoreTicker=null; }
+  submitLeaderboardRun();
   setTimeout(()=>{
     document.getElementById('overlay').classList.add('show');
     playWinChoir();
@@ -647,6 +842,72 @@ async function triggerEmailShortcut(){
   }
 }
 
+function maskEmail(email){
+  const [name, domain] = String(email).split('@');
+  if(!name || !domain) return email;
+  if(name.length <= 2) return `${name[0] || '*'}*@${domain}`;
+  return `${name[0]}${'*'.repeat(Math.min(4, name.length - 2))}${name[name.length - 1]}@${domain}`;
+}
+function renderLeaderboard(rows){
+  if(!leaderboardRowsEl || !leaderboardEmptyEl) return;
+  if(!rows.length){
+    leaderboardRowsEl.innerHTML='';
+    leaderboardEmptyEl.style.display='block';
+    return;
+  }
+  leaderboardEmptyEl.style.display='none';
+  leaderboardRowsEl.innerHTML = rows.map((row, idx)=>{
+    const topClass = idx < 3 ? ' top' : '';
+    return `
+      <div class="leaderboardRow${topClass}">
+        <div>#${idx+1}</div>
+        <div>${maskEmail(row.email)}</div>
+        <div>${row.score}</div>
+        <div>${formatSeconds(row.elapsedSeconds)}</div>
+        <div>${row.wrongAnswers}</div>
+      </div>
+    `;
+  }).join('');
+}
+async function loadLeaderboard(){
+  try{
+    const res = await fetch('/api/leaderboard?limit=10');
+    const data = await res.json().catch(()=>null);
+    if(!res.ok || !data?.ok || !Array.isArray(data.leaderboard)) return;
+    renderLeaderboard(data.leaderboard);
+  }catch{
+    // ignore leaderboard fetch failures in game flow
+  }
+}
+async function submitLeaderboardRun(){
+  if(leaderboardSubmitted) return;
+  const email = sessionStorage.getItem('garden_email');
+  if(!email) return;
+  leaderboardSubmitted = true;
+  const payload = scorePayload();
+  try{
+    const res = await fetch('/api/leaderboard', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email,
+        elapsedSeconds: payload.elapsedSeconds,
+        wrongAnswers: payload.wrongAnswers,
+        bestStreak: payload.bestStreak
+      })
+    });
+    const data = await res.json().catch(()=>null);
+    if(res.ok && data?.ok){
+      showToast(`Score submitted: ${data.entry?.score ?? computeScore(payload.elapsedSeconds, payload.wrongAnswers, payload.bestStreak)}/100`);
+      loadLeaderboard();
+      return;
+    }
+  }catch{
+    // ignore leaderboard submit failures in game flow
+  }
+  showToast('Score could not be submitted.');
+}
+
 function doSecretComplete(){
   // fill all rows except the last row (row index 8)
   for (let r = 0; r < 8; r++) {
@@ -664,6 +925,7 @@ function doSecretComplete(){
     }
   }
   updateProgress();
+  updateLiveScore();
   showToast('Cheat activated — rows 1–8 filled');
 }
 if (secretTap) {
@@ -731,6 +993,9 @@ document.getElementById('btnYes').addEventListener('click',()=>{
 /* start with a friendly first selection */
 select(0,2);
 updateProgress();
+updateLiveScore();
+liveScoreTicker = setInterval(updateLiveScore, 1000);
+loadLeaderboard();
 </script>
 </body>
 </html>

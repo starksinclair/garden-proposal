@@ -14,9 +14,11 @@ A web sudoku game behind a garden gate. She logs in with her birthday, solves th
 1. `GET /api/status` → login page shows unclaimed (email + password) or claimed (password only)
 2. `POST /api/login` → password checked **server-side** (accepts many formats of Sep 25, 2005: `09252005`, `25092005`, `sep 25 2005`, `25/09/2005`, ...)
 3. On success → sessionStorage flag + redirect to `/game.html`
-4. She wins → proposal screen → **Yes** → `POST /api/claim` → Redis write + Resend email
-5. After **Yes**, success view shows a 10s color-coded countdown (green → gold → red), then auto-redirects to `/`
-6. Claim is idempotent: replays never re-send the email or overwrite the record
+4. While she plays, a **live score** (max 100) updates from time, wrong answers, and correct streak
+5. On sudoku completion, the run is submitted to `POST /api/leaderboard` (stored in Upstash Redis)
+6. She wins → proposal screen → **Yes** → `POST /api/claim` → Redis write + Resend email
+7. After **Yes**, success view shows a 10s color-coded countdown (green → gold → red), then auto-redirects to `/`
+8. Claim is idempotent: replays never re-send the email or overwrite the record
 
 ## Deploy (about 15 minutes)
 
@@ -52,6 +54,15 @@ Add the env vars in **Project → Settings → Environment Variables** (see `.en
 - `$email` (typed anywhere in game): attempts a test send using the stored login email (`sessionStorage.garden_email`), shows toast status.
 - Invisible corner tap (bottom-right): triggers the same behavior as `$cheat`.
 
+## Leaderboard & scoring
+
+- Leaderboard is shown below the game (`public/game.html`) and reads from `GET /api/leaderboard`.
+- Scores are capped at **100** and computed from:
+  - elapsed solve time (faster is better),
+  - wrong answer count (penalty),
+  - correct-answer streak (bonus).
+- Submission happens automatically when the sudoku is fully solved.
+
 ### Testing email endpoint
 
 - `POST /api/test-email` with `{ "email": "you@example.com" }` sends the same "yes" email template without claiming the garden.
@@ -61,6 +72,7 @@ Add the env vars in **Project → Settings → Environment Variables** (see `.en
 - Her accepted password formats: `lib/password.ts`
 - The email content: `lib/email.ts`
 - The proposal text / game: `public/game.html`
+- Leaderboard API route: `app/api/leaderboard/route.ts`
 - Test email API route: `app/api/test-email/route.ts`
 - Login page copy: `app/page.tsx`
 
