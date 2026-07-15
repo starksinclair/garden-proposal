@@ -1,0 +1,163 @@
+:root {
+  --paper: #edf4e6;
+  --paper-deep: #dfead4;
+  --leaf: #2f6b3c;
+  --vine: #4c8c4a;
+  --sprout: #7fb069;
+  --ink: #22301f;
+  --blossom: #d97b93;
+  --cell: #f7fbf2;
+  --err: #b3564f;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: "Quicksand", system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  background-image:
+    radial-gradient(ellipse 60% 40% at 10% -5%, rgba(127, 176, 105, 0.18), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 95% 100%, rgba(127, 176, 105, 0.14), transparent 60%);
+}
+
+.gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.gateCard {
+  background: linear-gradient(165deg, #f9fdf4, #e9f3dd);
+  border: 2px solid var(--vine);
+  border-radius: 22px;
+  max-width: 420px;
+  width: 100%;
+  padding: 42px 30px 36px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 18px 50px rgba(47, 107, 60, 0.22);
+  animation: cardIn 0.9s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+  overflow: hidden;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.gateCard .corner { position: absolute; font-size: 1.9rem; opacity: 0.9; }
+.gateCard .corner.tl { top: 12px; left: 14px; transform: rotate(-25deg); }
+.gateCard .corner.br { bottom: 12px; right: 14px; transform: rotate(155deg); }
+
+.gateTitle {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.5rem, 6vw, 1.9rem);
+  color: var(--ink);
+  line-height: 1.35;
+}
+.gateTitle .stateWord { font-style: italic; color: #8a9b80; transition: color 0.5s; }
+.gateTitle .stateWord.claimed {
+  color: var(--vine);
+  font-style: italic;
+  text-shadow: 0 0 18px rgba(127, 176, 105, 0.5);
+}
+
+.gateSub {
+  font-size: 0.85rem;
+  color: #5a6f52;
+  margin-top: 10px;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+}
+
+.gateForm { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+
+.field { text-align: left; }
+.field label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--leaf);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  font-family: "Quicksand", sans-serif;
+  font-size: 1rem;
+  padding: 13px 16px;
+  border: 1.5px solid rgba(76, 140, 74, 0.45);
+  border-radius: 12px;
+  background: var(--cell);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus {
+  border-color: var(--vine);
+  box-shadow: 0 0 0 3px rgba(127, 176, 105, 0.25);
+}
+.field .hint { font-size: 0.72rem; color: #8a9b80; margin-top: 5px; font-style: italic; }
+
+.enterBtn {
+  font-family: "Quicksand", sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  background: linear-gradient(135deg, var(--vine), var(--leaf));
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 0;
+  cursor: pointer;
+  margin-top: 6px;
+  box-shadow: 0 8px 22px rgba(47, 107, 60, 0.4);
+  transition: transform 0.18s, box-shadow 0.18s, opacity 0.2s;
+}
+.enterBtn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(47, 107, 60, 0.5); }
+.enterBtn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+.gateError {
+  color: var(--err);
+  font-size: 0.83rem;
+  min-height: 1.2em;
+  animation: shake 0.35s;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.gateFoot { margin-top: 24px; font-size: 0.7rem; color: #7d8f74; }
+
+/* growing vine divider under the title */
+.vineLine {
+  width: 90px;
+  height: 2px;
+  background: var(--vine);
+  margin: 18px auto 0;
+  border-radius: 2px;
+  position: relative;
+  animation: vineGrow 1.4s 0.5s both ease;
+  transform-origin: center;
+}
+@keyframes vineGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.vineLine::after {
+  content: "🌱";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01s !important; transition-duration: 0.01s !important; }
+}

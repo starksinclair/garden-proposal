@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>A Puzzle for You 🌿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#edf4e6;
+  --paper-deep:#dfeAd4;
+  --leaf:#2f6b3c;
+  --vine:#4c8c4a;
+  --sprout:#7fb069;
+  --ink:#22301f;
+  --blossom:#d97b93;
+  --blossom-soft:#f2c9d4;
+  --gold:#c9a94e;
+  --cell:#f7fbf2;
+  --cell-given:#e2eed6;
+  --err:#b3564f;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Quicksand',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 10% -5%, rgba(127,176,105,.18), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 95% 100%, rgba(127,176,105,.14), transparent 60%);
+}
+header{padding:26px 16px 6px;text-align:center}
+h1{
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-weight:600;font-size:clamp(1.7rem,5.5vw,2.6rem);
+  color:var(--leaf);letter-spacing:.02em;
+}
+h1 em{font-style:italic;color:var(--vine)}
+.sub{font-size:.85rem;color:#5a6f52;margin-top:4px;letter-spacing:.04em}
+
+.toolbar{display:flex;gap:10px;margin:14px 0 4px;align-items:center}
+.chip{
+  border:1.5px solid var(--vine);background:var(--cell);color:var(--leaf);
+  font-family:inherit;font-weight:600;font-size:.8rem;
+  padding:7px 14px;border-radius:999px;cursor:pointer;
+  transition:background .2s, transform .15s;
+}
+.chip:hover{background:var(--cell-given);transform:translateY(-1px)}
+.chip:active{transform:translateY(0)}
+.chip.on{background:var(--vine);color:#fff}
+
+.stage{position:relative;margin:14px 0 8px}
+.board{
+  display:grid;grid-template-columns:repeat(9,1fr);
+  width:min(88vw,430px);aspect-ratio:1;
+  background:var(--cell);
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(47,107,60,.18), 0 2px 0 rgba(47,107,60,.1) inset;
+  overflow:hidden;
+  opacity:0;animation:boardIn 1.2s .4s ease forwards;
+}
+@keyframes boardIn{to{opacity:1}}
+.cellBtn{
+  border:none;background:transparent;font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.05rem,4.2vw,1.6rem);font-weight:600;color:var(--leaf);
+  cursor:pointer;position:relative;user-select:none;
+  border-right:1px solid rgba(76,140,74,.22);
+  border-bottom:1px solid rgba(76,140,74,.22);
+  transition:background .18s;
+}
+.cellBtn:nth-child(9n){border-right:none}
+.cellBtn:nth-child(n+73){border-bottom:none}
+.cellBtn.given{background:var(--cell-given);color:var(--ink);cursor:default;font-weight:600}
+.cellBtn.sel{background:rgba(127,176,105,.4);box-shadow:0 0 0 2px var(--vine) inset;border-radius:6px}
+.cellBtn.peer{background:rgba(127,176,105,.14)}
+.cellBtn.err{color:var(--err);animation:shake .35s}
+.cellBtn.pop span{display:inline-block;animation:popIn .3s}
+@keyframes popIn{0%{transform:scale(.3)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+/* vine overlay draws the thick 3x3 lines */
+svg.vines{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px);pointer-events:none;overflow:visible}
+.stem{fill:none;stroke:var(--vine);stroke-width:3.4;stroke-linecap:round;
+  stroke-dasharray:1000;stroke-dashoffset:1000;animation:grow 2.6s ease forwards}
+.stem.frame{stroke:var(--leaf);stroke-width:4.2}
+.leafShape{fill:var(--sprout);opacity:0;transform-origin:center;animation:sproutIn .7s ease forwards}
+@keyframes grow{to{stroke-dashoffset:0}}
+@keyframes sproutIn{0%{opacity:0;transform:scale(0) rotate(-30deg)}100%{opacity:.95;transform:scale(1) rotate(0)}}
+
+/* progress vine */
+.progressWrap{width:min(88vw,430px);margin:10px 0 2px}
+.progressLabel{font-size:.75rem;color:#5a6f52;margin-bottom:4px;text-align:center;letter-spacing:.05em}
+.progressTrack{height:10px;border-radius:999px;background:var(--paper-deep);overflow:hidden;position:relative}
+.progressFill{height:100%;width:0%;border-radius:999px;
+  background:linear-gradient(90deg,var(--sprout),var(--vine),var(--leaf));
+  transition:width .6s cubic-bezier(.34,1.4,.5,1);position:relative}
+.progressFill::after{content:"🌿";position:absolute;right:-4px;top:50%;transform:translateY(-52%);font-size:.85rem}
+
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0 8px;width:min(88vw,430px)}
+.pad button{
+  font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;
+  background:var(--cell);color:var(--leaf);border:1.5px solid rgba(76,140,74,.4);
+  border-radius:10px;padding:10px 0;cursor:pointer;transition:all .15s;
+}
+.pad button:hover{background:var(--cell-given);transform:translateY(-2px)}
+.pad button:active{transform:translateY(0)}
+.pad .erase{font-family:'Quicksand',sans-serif;font-size:.85rem;font-weight:600}
+footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
+
+/* ============ WIN OVERLAY ============ */
+.overlay{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(34,48,31,.55);backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;transition:opacity .8s;z-index:50;padding:18px;
+}
+.overlay.show{opacity:1;pointer-events:auto}
+.card{
+  background:linear-gradient(165deg,#f9fdf4,#e9f3dd);
+  border:2px solid var(--vine);
+  border-radius:22px;max-width:440px;width:100%;
+  padding:38px 28px 32px;text-align:center;position:relative;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+  transform:scale(.7) rotate(-2deg);opacity:0;
+  transition:transform .9s cubic-bezier(.2,1.4,.4,1), opacity .7s;
+  overflow:hidden;
+}
+.overlay.show .card{transform:scale(1) rotate(0);opacity:1}
+.card::before,.card::after{
+  content:"🌿";position:absolute;font-size:2.2rem;opacity:.9;
+}
+.card::before{top:10px;left:12px;transform:rotate(-25deg)}
+.card::after{bottom:10px;right:12px;transform:rotate(155deg)}
+.card .line1{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:clamp(1.25rem,4.6vw,1.6rem);color:var(--leaf);line-height:1.45;
+  opacity:0;transform:translateY(14px);transition:all .8s .6s;
+}
+.overlay.show .line1{opacity:1;transform:none}
+.card .divider{width:70px;height:2px;background:var(--vine);margin:18px auto;border-radius:2px;
+  transform:scaleX(0);transition:transform .7s 1.3s}
+.overlay.show .divider{transform:scaleX(1)}
+.card .bigQ{
+  font-family:'Cormorant Garamond',serif;font-weight:600;
+  font-size:clamp(1.8rem,7vw,2.6rem);color:var(--blossom);
+  opacity:0;transform:scale(.85);transition:all .9s 1.8s;line-height:1.2;
+}
+.overlay.show .bigQ{opacity:1;transform:scale(1)}
+.answers{margin-top:26px;display:flex;gap:16px;justify-content:center;position:relative;min-height:56px;
+  opacity:0;transition:opacity .8s 2.6s}
+.overlay.show .answers{opacity:1}
+.btnYes{
+  font-family:'Quicksand',sans-serif;font-weight:600;font-size:1.15rem;
+  background:linear-gradient(135deg,var(--vine),var(--leaf));color:#fff;
+  border:none;border-radius:999px;padding:14px 42px;cursor:pointer;
+  box-shadow:0 8px 22px rgba(47,107,60,.45);
+  transition:transform .2s, box-shadow .2s;animation:heartbeat 1.6s 3.4s infinite;
+}
+@keyframes heartbeat{0%,100%{transform:scale(1)}12%{transform:scale(1.07)}24%{transform:scale(1)}36%{transform:scale(1.05)}48%{transform:scale(1)}}
+.btnYes:hover{transform:scale(1.08);box-shadow:0 12px 30px rgba(47,107,60,.55)}
+.btnNo{
+  font-family:'Quicksand',sans-serif;font-weight:600;font-size:.95rem;
+  background:var(--paper-deep);color:#7d8f74;border:1.5px solid #b8ccab;
+  border-radius:999px;padding:12px 26px;cursor:pointer;transition:left .18s, top .18s;
+}
+.finale{display:none;padding:10px 0}
+.finale h2{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,7vw,2.5rem);color:var(--leaf)}
+.finale p{margin-top:12px;font-style:italic;font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:#5a6f52}
+
+/* falling leaves / petals */
+.fall{position:fixed;top:-40px;z-index:60;pointer-events:none;font-size:1.4rem;
+  animation:fall linear forwards}
+@keyframes fall{
+  to{transform:translateY(110vh) rotate(720deg);opacity:.7}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01s !important;transition-duration:.01s !important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>A Little Garden <em>of Numbers</em></h1>
+  <div class="sub">solve it, and something is waiting for you at the end 🌱</div>
+</header>
+
+<div class="toolbar">
+  <button class="chip" id="soundBtn">🎶 sing to me</button>
+  <button class="chip" id="hintBtn">🌱 grow a hint</button>
+</div>
+
+<div class="stage">
+  <svg class="vines" id="vineSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="board" id="board"></div>
+</div>
+
+<div class="progressWrap">
+  <div class="progressLabel" id="progLabel">the garden is waiting…</div>
+  <div class="progressTrack"><div class="progressFill" id="progFill"></div></div>
+</div>
+
+<div class="pad" id="pad"></div>
+
+<footer>made with 💚 · every number you plant grows something</footer>
+
+<!-- WIN OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="card">
+    <div id="askStage">
+      <div class="line1">You have solved the puzzle to my heart,<br>it's time to claim it.</div>
+      <div class="divider"></div>
+      <div class="bigQ">Will you be my girlfriend? 💚</div>
+      <div class="answers" id="answers">
+        <button class="btnYes" id="btnYes">Yes 🌿</button>
+        <button class="btnNo" id="btnNo">No</button>
+      </div>
+    </div>
+    <div class="finale" id="finale">
+      <h2 id="finaleTitle">She said yes! 🌿💚</h2>
+      <p>You solved my heart — now it's yours to keep.<br>Every square of it.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= GATE ================= */
+/* only those who came through the garden gate may play */
+if (sessionStorage.getItem('garden_authed') !== '1') {
+  location.replace('/');
+}
+
+/* ================= SUDOKU ================= */
+const BASE = [
+  [5,3,4,6,7,8,9,1,2],
+  [6,7,2,1,9,5,3,4,8],
+  [1,9,8,3,4,2,5,6,7],
+  [8,5,9,7,6,1,4,2,3],
+  [4,2,6,8,5,3,7,9,1],
+  [7,1,3,9,2,4,8,5,6],
+  [9,6,1,5,3,7,2,8,4],
+  [2,8,7,4,1,9,6,3,5],
+  [3,4,5,2,8,6,1,7,9]
+];
+// relabel digits randomly so it feels fresh each load, stays valid
+const perm = [1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
+const SOLUTION = BASE.map(r=>r.map(v=>perm[v-1]));
+
+// EASY: 41 givens, blanks spread evenly (each row/box keeps plenty of clues)
+const BLANKS = [
+  [0,2],[0,5],[0,7],
+  [1,0],[1,3],[1,8],
+  [2,1],[2,4],[2,6],
+  [3,2],[3,7],[3,0],
+  [4,1],[4,4],[4,8],[4,6],
+  [5,3],[5,0],[5,6],[5,8],
+  [6,2],[6,5],[6,7],
+  [7,1],[7,4],[7,8],
+  [8,0],[8,3],[8,6],
+  [0,4],[2,8],[4,3],[6,0],[7,6],[8,5],[1,5],[5,4],[3,4],[6,8]
+];
+const puzzle = SOLUTION.map(r=>r.slice());
+BLANKS.forEach(([r,c])=>puzzle[r][c]=0);
+const state = puzzle.map(r=>r.slice());
+
+const boardEl = document.getElementById('board');
+let selected = null;
+const cells = [];
+for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+  const b=document.createElement('button');
+  b.className='cellBtn'; b.dataset.r=r; b.dataset.c=c;
+  if(puzzle[r][c]!==0){ b.classList.add('given'); b.innerHTML=`<span>${puzzle[r][c]}</span>`; }
+  else b.addEventListener('click',()=>select(r,c));
+  boardEl.appendChild(b); cells.push(b);
+}
+function cellAt(r,c){return cells[r*9+c];}
+function select(r,c){
+  selected={r,c};
+  cells.forEach(b=>b.classList.remove('sel','peer'));
+  cells.forEach(b=>{
+    const br=+b.dataset.r, bc=+b.dataset.c;
+    if(br===r||bc===c||(Math.floor(br/3)===Math.floor(r/3)&&Math.floor(bc/3)===Math.floor(c/3)))
+      b.classList.add('peer');
+  });
+  cellAt(r,c).classList.add('sel');
+}
+function place(n){
+  if(!selected) return;
+  const {r,c}=selected; if(puzzle[r][c]!==0) return;
+  const el=cellAt(r,c);
+  el.classList.remove('err');
+  if(n===0){ state[r][c]=0; el.innerHTML=''; updateProgress(); return; }
+  state[r][c]=n;
+  el.innerHTML=`<span>${n}</span>`;
+  el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),320);
+  if(n!==SOLUTION[r][c]){ el.classList.add('err'); playWrong(); }
+  else { checkBoxComplete(r,c); }
+  updateProgress();
+  checkWin();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key>='1'&&e.key<='9') place(+e.key);
+  if(e.key==='Backspace'||e.key==='Delete'||e.key==='0') place(0);
+  if(selected){
+    let {r,c}=selected;
+    if(e.key==='ArrowUp')r=Math.max(0,r-1);
+    if(e.key==='ArrowDown')r=Math.min(8,r+1);
+    if(e.key==='ArrowLeft')c=Math.max(0,c-1);
+    if(e.key==='ArrowRight')c=Math.min(8,c+1);
+    if(e.key.startsWith('Arrow')){e.preventDefault();select(r,c);}
+  }
+});
+
+/* number pad */
+const pad=document.getElementById('pad');
+for(let n=1;n<=9;n++){
+  const b=document.createElement('button');
+  b.textContent=n; b.addEventListener('click',()=>place(n));
+  pad.appendChild(b);
+}
+const er=document.createElement('button');
+er.textContent='erase'; er.className='erase';
+er.addEventListener('click',()=>place(0));
+pad.appendChild(er);
+
+/* hint */
+document.getElementById('hintBtn').addEventListener('click',()=>{
+  // fill selected cell if empty+wrong, else first empty cell
+  let target=null;
+  if(selected && puzzle[selected.r][selected.c]===0 && state[selected.r][selected.c]!==SOLUTION[selected.r][selected.c])
+    target=selected;
+  else{
+    outer: for(let r=0;r<9;r++)for(let c=0;c<9;c++)
+      if(puzzle[r][c]===0 && state[r][c]!==SOLUTION[r][c]){target={r,c};break outer;}
+  }
+  if(!target) return;
+  select(target.r,target.c);
+  place(SOLUTION[target.r][target.c]);
+});
+
+/* progress */
+const totalBlanks = BLANKS.length;
+function correctCount(){
+  let n=0; BLANKS.forEach(([r,c])=>{if(state[r][c]===SOLUTION[r][c])n++;});
+  return n;
+}
+const progFill=document.getElementById('progFill');
+const progLabel=document.getElementById('progLabel');
+const labels=[
+  [0,'the garden is waiting…'],[10,'a seed has sprouted 🌱'],
+  [30,'little leaves are unfolding…'],[55,'the vines are climbing 🍃'],
+  [80,'buds are forming… almost there'],[99,'one more bloom…'],[100,'in full bloom 🌸']
+];
+function updateProgress(){
+  const pct=Math.round(correctCount()/totalBlanks*100);
+  progFill.style.width=pct+'%';
+  let txt=labels[0][1];
+  for(const [t,l] of labels) if(pct>=t) txt=l;
+  progLabel.textContent=txt;
+}
+
+/* box completion celebration */
+const doneBoxes=new Set();
+function checkBoxComplete(r,c){
+  const br=Math.floor(r/3), bc=Math.floor(c/3), key=br+'-'+bc;
+  if(doneBoxes.has(key))return;
+  for(let i=br*3;i<br*3+3;i++)for(let j=bc*3;j<bc*3+3;j++)
+    if(state[i][j]!==SOLUTION[i][j])return;
+  doneBoxes.add(key);
+  playSwell();
+  for(let i=br*3;i<br*3+3;i++)for(let j=bc*3;j<bc*3+3;j++){
+    const el=cellAt(i,j);
+    el.style.transition='background .5s';
+    el.style.background='rgba(127,176,105,.35)';
+    setTimeout(()=>{el.style.background='';},900);
+  }
+  dropLeaves(6);
+}
+
+/* win */
+let won=false;
+function checkWin(){
+  if(won)return;
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++)
+    if(state[r][c]!==SOLUTION[r][c])return;
+  won=true;
+  setTimeout(()=>{
+    document.getElementById('overlay').classList.add('show');
+    playWinChoir();
+    dropLeaves(26,true);
+  },600);
+}
+
+/* ============ VINE GRID DRAWING ============ */
+const svg=document.getElementById('vineSvg');
+function wavyPath(x1,y1,x2,y2,waves=5,amp=4){
+  const dx=(x2-x1)/waves, dy=(y2-y1)/waves;
+  const horiz=Math.abs(x2-x1)>Math.abs(y2-y1);
+  let d=`M ${x1} ${y1}`;
+  for(let i=0;i<waves;i++){
+    const mx=x1+dx*(i+.5), my=y1+dy*(i+.5);
+    const off=(i%2?-amp:amp);
+    const cx=horiz?mx:mx+off, cy=horiz?my+off:my;
+    d+=` Q ${cx} ${cy} ${x1+dx*(i+1)} ${y1+dy*(i+1)}`;
+  }
+  return d;
+}
+function leaf(x,y,angle,delay){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','path');
+  g.setAttribute('d',`M ${x} ${y} q 6 -8 14 -4 q -6 10 -14 4 z`);
+  g.setAttribute('class','leafShape');
+  g.setAttribute('transform',`rotate(${angle} ${x} ${y})`);
+  g.style.animationDelay=delay+'s';
+  svg.appendChild(g);
+}
+function buildVines(){
+  svg.innerHTML='';
+  const box=document.getElementById('board').getBoundingClientRect();
+  const W=box.width+28, H=box.height+28, P=14;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const innerW=W-2*P, innerH=H-2*P;
+  const linesV=[P+innerW/3,P+2*innerW/3], linesH=[P+innerH/3,P+2*innerH/3];
+  const paths=[
+    // frame
+    [wavyPath(P,P,W-P,P,7),'frame',0],
+    [wavyPath(W-P,P,W-P,H-P,7),'frame',.35],
+    [wavyPath(W-P,H-P,P,H-P,7),'frame',.7],
+    [wavyPath(P,H-P,P,P,7),'frame',1.05],
+    // inner 3x3 lines
+    [wavyPath(linesV[0],P,linesV[0],H-P,6),'',1.2],
+    [wavyPath(linesV[1],P,linesV[1],H-P,6),'',1.4],
+    [wavyPath(P,linesH[0],W-P,linesH[0],6),'',1.6],
+    [wavyPath(P,linesH[1],W-P,linesH[1],6),'',1.8],
+  ];
+  paths.forEach(([d,cls,delay])=>{
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',d);
+    p.setAttribute('class','stem '+cls);
+    p.style.animationDelay=delay+'s';
+    svg.appendChild(p);
+  });
+  // sprinkle leaves along lines
+  const spots=[
+    [linesV[0],P+innerH*.2,-40,2.2],[linesV[0],P+innerH*.65,140,2.5],
+    [linesV[1],P+innerH*.35,-140,2.6],[linesV[1],P+innerH*.8,40,2.9],
+    [P+innerW*.25,linesH[0],-15,2.7],[P+innerW*.7,linesH[0],165,3.0],
+    [P+innerW*.4,linesH[1],20,3.1],[P+innerW*.85,linesH[1],-160,3.3],
+    [P+innerW*.15,P,-10,1.5],[P+innerW*.6,P,190,1.7],
+    [P,P+innerH*.5,110,1.9],[W-P,P+innerH*.3,-70,1.6],
+    [P+innerW*.35,H-P,10,2.0],[P+innerW*.8,H-P,-170,2.1],
+  ];
+  spots.forEach(([x,y,a,d])=>leaf(x,y,a,d));
+}
+buildVines();
+window.addEventListener('resize',()=>{ /* keep drawn state, just rescale */ 
+  buildVines();
+  svg.querySelectorAll('.stem').forEach(p=>{p.style.animation='none';p.style.strokeDashoffset='0';});
+  svg.querySelectorAll('.leafShape').forEach(l=>{l.style.animation='none';l.style.opacity='.95';l.style.transform='scale(1)';});
+});
+
+/* ============ FALLING LEAVES ============ */
+function dropLeaves(n, hearts=false){
+  const chars = hearts ? ['🌿','🍃','💚','🌸','🤍','🌱'] : ['🌿','🍃','🌱'];
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');
+    s.className='fall';
+    s.textContent=chars[Math.floor(Math.random()*chars.length)];
+    s.style.left=Math.random()*100+'vw';
+    s.style.fontSize=(1+Math.random()*1.3)+'rem';
+    s.style.animationDuration=(3+Math.random()*3.5)+'s';
+    s.style.animationDelay=(Math.random()*1.2)+'s';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),8000);
+  }
+}
+
+/* ============ ACAPELLA SYNTH ============ */
+let actx=null, master=null, choirOn=false, loopTimer=null;
+function audio(){
+  if(!actx){
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    master=actx.createGain(); master.gain.value=.5; master.connect(actx.destination);
+  }
+  if(actx.state==='suspended')actx.resume();
+  return actx;
+}
+/* one "ahh" voice: two detuned oscillators -> formant bandpasses -> envelope */
+function voice(freq, start, dur, vol=0.16, vowel='ah'){
+  const ctx=audio();
+  const formants = vowel==='oo' ? [[350,8],[800,10]] : [[720,7],[1150,9],[2500,12]];
+  const vGain=ctx.createGain(); vGain.gain.value=0; vGain.connect(master);
+  // gentle vibrato
+  const lfo=ctx.createOscillator(), lfoG=ctx.createGain();
+  lfo.frequency.value=5.2; lfoG.gain.value=freq*0.006;
+  lfo.connect(lfoG); lfo.start(start); lfo.stop(start+dur+0.5);
+  [0,-7].forEach(det=>{
+    const o=ctx.createOscillator();
+    o.type='sawtooth'; o.frequency.value=freq; o.detune.value=det+Math.random()*4-2;
+    lfoG.connect(o.frequency);
+    formants.forEach(([f,q])=>{
+      const bp=ctx.createBiquadFilter();
+      bp.type='bandpass'; bp.frequency.value=f; bp.Q.value=q;
+      const fg=ctx.createGain(); fg.gain.value=.6;
+      o.connect(bp); bp.connect(fg); fg.connect(vGain);
+    });
+    o.start(start); o.stop(start+dur+0.4);
+  });
+  // choir envelope: slow bloom, soft release
+  vGain.gain.setValueAtTime(0,start);
+  vGain.gain.linearRampToValueAtTime(vol,start+dur*0.35);
+  vGain.gain.setValueAtTime(vol,start+dur*0.7);
+  vGain.gain.linearRampToValueAtTime(0.0001,start+dur+0.35);
+}
+function chord(freqs,start,dur,vol,vowel){freqs.forEach(f=>voice(f,start,dur,vol,vowel));}
+const N={G3:196,A3:220,B3:246.9,C4:261.6,D4:293.7,E4:329.6,G4:392,A4:440,B4:493.9,C5:523.3,D5:587.3,E5:659.3,G5:784};
+/* gentle I–V–vi–IV in G, looped while sound is on */
+function playLoop(){
+  if(!choirOn)return;
+  const t=audio().currentTime+0.1, d=3.2;
+  const prog=[
+    [N.G3,N.B3,N.D4,N.G4],       // G
+    [N.D4,N.A3,N.D4*1.0,N.A4*0.749], // D-ish (D F# A)
+    [N.E4/2,N.B3,N.E4,N.G4],     // Em
+    [N.C4,N.E4,N.G4,N.C5],       // C
+  ];
+  // fix D chord properly: D A D F#
+  prog[1]=[146.8,220,293.7,370];
+  prog.forEach((c,i)=>chord(c,t+i*d,d*1.05,.11,'ah'));
+  loopTimer=setTimeout(playLoop,d*4*1000-200);
+}
+document.getElementById('soundBtn').addEventListener('click',function(){
+  choirOn=!choirOn;
+  this.classList.toggle('on',choirOn);
+  this.textContent=choirOn?'🎶 singing…':'🎶 sing to me';
+  if(choirOn){audio();playLoop();}
+  else{clearTimeout(loopTimer);}
+});
+/* short "ooh" swell on box completion */
+function playSwell(){
+  if(!actx)return;
+  const t=actx.currentTime+0.05;
+  chord([N.G4,N.B4,N.D5],t,1.6,.13,'oo');
+}
+/* soft low hum on wrong note */
+function playWrong(){
+  if(!actx)return;
+  voice(N.G3*0.944,actx.currentTime+0.02,0.8,.08,'oo'); // slightly flat, gentle
+}
+/* big resolving choir for the win */
+function playWinChoir(){
+  const ctx=audio(); const t=ctx.currentTime+0.15;
+  chord([N.C4,N.E4,N.G4,N.C5],t,2.6,.12,'ah');       // C
+  chord([146.8,220,293.7,370],t+2.4,2.6,.12,'ah');   // D
+  chord([N.G3,N.B3,N.D4,N.G4,N.B4,N.D5,N.G5],t+4.8,5.5,.13,'ah'); // G bloom
+  chord([N.G4,N.B4,N.D5],t+6.2,4.5,.07,'oo');        // shimmer on top
+}
+
+/* ============ RUNAWAY NO BUTTON ============ */
+const btnNo=document.getElementById('btnNo');
+const answers=document.getElementById('answers');
+let dodges=0;
+function dodge(){
+  dodges++;
+  const card=btnNo.closest('.card').getBoundingClientRect();
+  btnNo.style.position='fixed';
+  const bw=btnNo.offsetWidth, bh=btnNo.offsetHeight;
+  const x=Math.random()*(window.innerWidth-bw-20)+10;
+  const y=Math.random()*(window.innerHeight-bh-20)+10;
+  btnNo.style.left=x+'px'; btnNo.style.top=y+'px';
+  const teases=['No','nope, try again 😌','it ran away 🍃','the vines won\'t let you 🌿','just say yes 💚','No is not in this garden'];
+  btnNo.textContent=teases[Math.min(dodges,teases.length-1)];
+  if(dodges>=6){btnNo.style.transform='scale(0)';btnNo.style.transition='transform .5s';setTimeout(()=>btnNo.remove(),600);}
+}
+btnNo.addEventListener('mouseenter',dodge);
+btnNo.addEventListener('touchstart',e=>{e.preventDefault();dodge();},{passive:false});
+btnNo.addEventListener('click',e=>{e.preventDefault();dodge();});
+
+/* YES — claim the garden forever */
+document.getElementById('btnYes').addEventListener('click',()=>{
+  document.getElementById('askStage').style.display='none';
+  document.getElementById('finale').style.display='block';
+  if(btnNo.isConnected)btnNo.remove();
+  dropLeaves(40,true);
+  playWinChoir();
+  setInterval(()=>dropLeaves(8,true),4000);
+  // record her yes + send the email (server ignores repeats on replays)
+  const email=sessionStorage.getItem('garden_email');
+  fetch('/api/claim',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email})
+  }).catch(()=>{ /* the yes still counts even if the network hiccups */ });
+});
+
+/* start with a friendly first selection */
+select(0,2);
+updateProgress();
+</script>
+</body>
+</html>
