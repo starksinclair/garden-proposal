@@ -310,24 +310,25 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
     <svg class="vines" id="vineSvg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="board" id="board"></div>
   </div>
-  <aside class="scoreCard">
-    <h3>Live score</h3>
-    <div class="scoreMain"><span class="num" id="liveScore">100</span><span class="max">/ 100</span></div>
-    <div class="scoreMeta">
-      <div><b>Time</b>: <span id="timeElapsed">0:00</span></div>
-      <div><b>Wrong answers</b>: <span id="wrongCount">0</span></div>
-      <div><b>Current streak</b>: <span id="streakCount">0</span></div>
-      <div><b>Best streak</b>: <span id="bestStreakCount">0</span></div>
-    </div>
-  </aside>
+  <div class="progressWrap">
+    <div class="progressLabel" id="progLabel">the garden is waiting…</div>
+    <div class="progressTrack"><div class="progressFill" id="progFill"></div></div>
+  </div>
+
+  <div class="pad" id="pad"></div>
+
 </div>
 
-<div class="progressWrap">
-  <div class="progressLabel" id="progLabel">the garden is waiting…</div>
-  <div class="progressTrack"><div class="progressFill" id="progFill"></div></div>
-</div>
-
-<div class="pad" id="pad"></div>
+<aside class="scoreCard">
+  <h3>Live score</h3>
+  <div class="scoreMain"><span class="num" id="liveScore">100</span><span class="max">/ 100</span></div>
+  <div class="scoreMeta">
+    <div><b>Time</b>: <span id="timeElapsed">0:00</span></div>
+    <div><b>Wrong answers</b>: <span id="wrongCount">0</span></div>
+    <div><b>Current streak</b>: <span id="streakCount">0</span></div>
+    <div><b>Best streak</b>: <span id="bestStreakCount">0</span></div>
+  </div>
+</aside>
 
 <section class="leaderboard" id="leaderboard">
   <h3>Garden leaderboard</h3>
@@ -349,6 +350,7 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
   <div class="card">
     <div id="askStage">
       <div class="line1">You have solved the puzzle to my heart,<br>it's time to claim it.</div>
+      <div style="margin-top:8px;font-size:.95rem;color:var(--blossom);font-style:italic;">Don't worry, you can't mistakenly say "No" this time </div>
       <div class="divider"></div>
       <div class="bigQ">Will you be my girlfriend? 💚</div>
       <div class="answers" id="answers">
@@ -358,7 +360,7 @@ footer{font-size:.72rem;color:#7d8f74;padding:10px 16px 26px;text-align:center}
     </div>
     <div class="finale" id="finale">
       <h2 id="finaleTitle">She said yes! 🌿💚</h2>
-      <p>You solved my heart — now it's yours to keep.<br>Every square of it.</p>
+      <p>You solved my heart, now it's yours to keep.<br>Every square of it.</p>
       <div class="countdown good" id="countdownMsg">Heading home in <span id="countdownSecs">10</span>s…</div>
     </div>
   </div>
@@ -662,7 +664,7 @@ function buildVines(){
   spots.forEach(([x,y,a,d])=>leaf(x,y,a,d));
 }
 buildVines();
-window.addEventListener('resize',()=>{ /* keep drawn state, just rescale */ 
+window.addEventListener('resize',()=>{ /* keep drawn state, just rescale */
   buildVines();
   svg.querySelectorAll('.stem').forEach(p=>{p.style.animation='none';p.style.strokeDashoffset='0';});
   svg.querySelectorAll('.leafShape').forEach(l=>{l.style.animation='none';l.style.opacity='.95';l.style.transform='scale(1)';});
@@ -928,10 +930,20 @@ function doSecretComplete(){
   updateLiveScore();
   showToast('Cheat activated — rows 1–8 filled');
 }
+function enterWinOverlayTest(){
+  if(homeCountdownTimer){
+    clearInterval(homeCountdownTimer);
+    homeCountdownTimer = null;
+  }
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('askStage').style.display='block';
+  document.getElementById('finale').style.display='none';
+  showToast('Win overlay test mode');
+}
 if (secretTap) {
   secretTap.addEventListener('click', doSecretComplete);
 }
-// keyboard cheat: type "$cheat" anywhere to trigger the same behavior
+// keyboard cheats: type "$cheat", "$email", or "$test" anywhere
 let cheatBuf = '';
 document.addEventListener('keydown', (e) => {
   const k = e.key;
@@ -945,6 +957,11 @@ document.addEventListener('keydown', (e) => {
     }
     if (cheatBuf.endsWith('$email')) {
       triggerEmailShortcut();
+      cheatBuf = '';
+      return;
+    }
+    if (cheatBuf.endsWith('$test')) {
+      enterWinOverlayTest();
       cheatBuf = '';
     }
   } else if (k === 'Escape') {
